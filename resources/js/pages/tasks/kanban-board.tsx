@@ -11,6 +11,14 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import { Badge } from '@/components/ui/badge';
 
 interface KanbanBoardProps {
     initialTasks: Task[];
@@ -25,6 +33,7 @@ const COLUMNS = {
 
 export default function KanbanBoard({ initialTasks, search = '' }: KanbanBoardProps) {
     const [tasks, setTasks] = useState<Task[]>(initialTasks);
+    const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
     useEffect(() => {
         setTasks(initialTasks);
@@ -135,14 +144,20 @@ export default function KanbanBoard({ initialTasks, search = '' }: KanbanBoardPr
                                                         ref={provided.innerRef}
                                                         {...provided.draggableProps}
                                                         {...provided.dragHandleProps}
-                                                        className={`group relative flex flex-col gap-2 rounded-lg border bg-card p-4 shadow-sm transition-all hover:shadow-md ${snapshot.isDragging ? 'shadow-lg ring-2 ring-primary/20 rotate-2' : ''}`}
+                                                        onClick={() => setSelectedTask(task)}
+                                                        className={`group relative flex flex-col gap-2 rounded-lg border bg-card p-4 shadow-sm transition-all hover:shadow-md cursor-pointer ${snapshot.isDragging ? 'shadow-lg ring-2 ring-primary/20 rotate-2' : ''}`}
                                                         style={provided.draggableProps.style}
                                                     >
                                                         <div className="flex items-start justify-between gap-2">
                                                             <span className="font-medium leading-tight">{task.title}</span>
                                                             <DropdownMenu>
                                                                 <DropdownMenuTrigger asChild>
-                                                                    <Button variant="ghost" size="icon" className="h-6 w-6 -mr-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                    <Button
+                                                                        variant="ghost"
+                                                                        size="icon"
+                                                                        className="h-6 w-6 -mr-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                                        onClick={(e) => e.stopPropagation()}
+                                                                    >
                                                                         <MoreVertical className="h-3 w-3" />
                                                                     </Button>
                                                                 </DropdownMenuTrigger>
@@ -158,6 +173,37 @@ export default function KanbanBoard({ initialTasks, search = '' }: KanbanBoardPr
                                                                 </DropdownMenuContent>
                                                             </DropdownMenu>
                                                         </div>
+
+                                                        {task.description && (
+                                                            <p className="text-xs text-muted-foreground line-clamp-2">{task.description}</p>
+                                                        )}
+
+                                                        <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
+                                                            <div className="flex items-center gap-2">
+                                                                {task.due_date ? (
+                                                                    <div className={`flex items-center gap-1 ${new Date(task.due_date) < new Date() && status !== 'completed' ? 'text-destructive font-medium' : ''}`}>
+                                                                        <Calendar className="h-3 w-3" />
+                                                                        <span>{new Date(task.due_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
+                                                                    </div>
+                                                                ) : (
+                                                                    <div />
+                                                                )}
+                                                                {task.user && (
+                                                                    <div className="flex items-center gap-1 text-muted-foreground" title={`Assigned to ${task.user.name}`}>
+                                                                        <div className="h-4 w-4 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-medium text-primary">
+                                                                            {task.user.name.charAt(0)}
+                                                                        </div>
+                                                                        <span className="max-w-[80px] truncate">{task.user.name}</span>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+
+                                                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                <div className="h-1.5 w-1.5 rounded-full bg-muted-foreground/30" />
+                                                                <div className="h-1.5 w-1.5 rounded-full bg-muted-foreground/30" />
+                                                                <div className="h-1.5 w-1.5 rounded-full bg-muted-foreground/30" />
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 )}
                                             </Draggable>
@@ -170,6 +216,87 @@ export default function KanbanBoard({ initialTasks, search = '' }: KanbanBoardPr
                     );
                 })}
             </div>
+
+            {/* Task Details Modal */}
+            <Dialog open={!!selectedTask} onOpenChange={(open) => !open && setSelectedTask(null)}>
+                <DialogContent className="max-w-2xl">
+                    {selectedTask && (
+                        <>
+                            <DialogHeader>
+                                <DialogTitle className="text-xl font-bold">{selectedTask.title}</DialogTitle>
+                                <DialogDescription>
+                                    <div className="flex items-center gap-2 mt-2">
+                                        <Badge variant={
+                                            selectedTask.status === 'completed' ? 'default' :
+                                                selectedTask.status === 'in_progress' ? 'secondary' :
+                                                    'outline'
+                                        }>
+                                            {selectedTask.status === 'pending' && <Circle className="h-3 w-3 mr-1" />}
+                                            {selectedTask.status === 'in_progress' && <Clock className="h-3 w-3 mr-1" />}
+                                            {selectedTask.status === 'completed' && <CheckCircle2 className="h-3 w-3 mr-1" />}
+                                            {selectedTask.status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                        </Badge>
+                                        {selectedTask.due_date && (
+                                            <span className="text-sm text-muted-foreground flex items-center gap-1">
+                                                <Calendar className="h-3 w-3" />
+                                                Due: {new Date(selectedTask.due_date).toLocaleDateString(undefined, {
+                                                    weekday: 'short',
+                                                    year: 'numeric',
+                                                    month: 'long',
+                                                    day: 'numeric'
+                                                })}
+                                            </span>
+                                        )}
+                                    </div>
+                                </DialogDescription>
+                            </DialogHeader>
+
+                            <div className="mt-4 space-y-4">
+                                {selectedTask.description && (
+                                    <div>
+                                        <h4 className="text-sm font-semibold mb-2">Description</h4>
+                                        <p className="text-sm text-muted-foreground whitespace-pre-wrap">{selectedTask.description}</p>
+                                    </div>
+                                )}
+
+                                {selectedTask.user && (
+                                    <div>
+                                        <h4 className="text-sm font-semibold mb-2">Assigned To</h4>
+                                        <div className="flex items-center gap-2">
+                                            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-medium text-primary">
+                                                {selectedTask.user.name.charAt(0)}
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-medium">{selectedTask.user.name}</p>
+                                                <p className="text-xs text-muted-foreground">{selectedTask.user.email}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div className="flex gap-2 pt-4 border-t">
+                                    <Link href={route('tasks.edit', selectedTask.id)} className="flex-1">
+                                        <Button variant="outline" className="w-full">
+                                            <Pencil className="mr-2 h-4 w-4" />
+                                            Edit Task
+                                        </Button>
+                                    </Link>
+                                    <Button
+                                        variant="destructive"
+                                        onClick={() => {
+                                            setSelectedTask(null);
+                                            handleDelete(selectedTask.id);
+                                        }}
+                                    >
+                                        <Trash2 className="mr-2 h-4 w-4" />
+                                        Delete
+                                    </Button>
+                                </div>
+                            </div>
+                        </>
+                    )}
+                </DialogContent>
+            </Dialog>
         </DragDropContext>
     );
 }

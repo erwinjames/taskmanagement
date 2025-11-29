@@ -16,7 +16,20 @@ class TaskController extends Controller
      */
     public function index()
     {
-        $tasks = auth()->user()->tasks()->with('user')->orderBy('order')->latest()->get();
+        $user = auth()->user();
+
+        if ($user->isAdmin()) {
+            // Admin sees tasks they assigned to OTHER users (not themselves)
+            $tasks = Task::where('user_id', '!=', $user->id)
+                ->with('user')
+                ->orderBy('order')
+                ->latest()
+                ->get();
+        } else {
+            // Regular users see their own tasks
+            $tasks = $user->tasks()->with('user')->orderBy('order')->latest()->get();
+        }
+
         return Inertia::render('tasks/index', ['tasks' => $tasks]);
     }
 
