@@ -22,11 +22,18 @@ export interface NavItem {
     isActive?: boolean;
 }
 
+export interface Notifications {
+    overdue: Task[];
+    today: Task[];
+    high_priority: Task[];
+}
+
 export interface SharedData {
     name: string;
     quote: { message: string; author: string };
     auth: Auth;
     sidebarOpen: boolean;
+    notifications: Notifications;
     [key: string]: unknown;
 }
 
@@ -48,9 +55,13 @@ export interface Task {
     title: string;
     description: string | null;
     status: 'pending' | 'in_progress' | 'completed';
+    priority: 'low' | 'medium' | 'high';
     due_date: string | null;
     order?: number;
     user?: User;
+    subtasks?: { id: number; title: string; is_completed: boolean }[];
+    attachments?: { id: number; file_name: string; file_size: number; file_path: string }[];
+    dependencies?: Task[];
     created_at: string;
     updated_at: string;
 }

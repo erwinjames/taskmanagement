@@ -45,7 +45,21 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
             ],
-            'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
+            'sidebarOpen' => !$request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
+            'notifications' => $request->user() ? [
+                'overdue' => \App\Models\Task::where('due_date', '<', now()->format('Y-m-d'))
+                    ->where('status', '!=', 'completed')
+                    ->where('user_id', $request->user()->id)
+                    ->get(),
+                'today' => \App\Models\Task::whereDate('due_date', now())
+                    ->where('status', '!=', 'completed')
+                    ->where('user_id', $request->user()->id)
+                    ->get(),
+                'high_priority' => \App\Models\Task::where('priority', 'high')
+                    ->where('status', '!=', 'completed')
+                    ->where('user_id', $request->user()->id)
+                    ->get(),
+            ] : [],
         ];
     }
 }

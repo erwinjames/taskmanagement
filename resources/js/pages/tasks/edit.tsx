@@ -25,6 +25,7 @@ export default function TaskEdit({ task }: { task: Task }) {
         title: task.title,
         description: task.description || '',
         status: task.status,
+        priority: task.priority || 'medium',
         due_date: task.due_date || '',
     });
 
@@ -71,7 +72,7 @@ export default function TaskEdit({ task }: { task: Task }) {
                             <InputError message={errors.description} />
                         </div>
 
-                        <div className="grid gap-6 md:grid-cols-2">
+                        <div className="grid gap-6 md:grid-cols-3">
                             <div className="grid gap-2">
                                 <Label htmlFor="status">Status</Label>
                                 <Select value={data.status} onValueChange={(value) => setData('status', value)}>
@@ -85,6 +86,21 @@ export default function TaskEdit({ task }: { task: Task }) {
                                     </SelectContent>
                                 </Select>
                                 <InputError message={errors.status} />
+                            </div>
+
+                            <div className="grid gap-2">
+                                <Label htmlFor="priority">Priority</Label>
+                                <Select value={data.priority} onValueChange={(value) => setData('priority', value)}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select priority" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="low">Low</SelectItem>
+                                        <SelectItem value="medium">Medium</SelectItem>
+                                        <SelectItem value="high">High</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <InputError message={errors.priority} />
                             </div>
 
                             <div className="grid gap-2">

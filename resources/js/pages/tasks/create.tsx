@@ -25,6 +25,7 @@ export default function TaskCreate({ users = [] }: { users?: User[] }) {
         title: '',
         description: '',
         status: 'pending',
+        priority: 'medium',
         due_date: '',
         assigned_to: '',
     });
@@ -91,7 +92,7 @@ export default function TaskCreate({ users = [] }: { users?: User[] }) {
                             <InputError message={errors.description} />
                         </div>
 
-                        <div className="grid gap-6 md:grid-cols-2">
+                        <div className="grid gap-6 md:grid-cols-3">
                             <div className="grid gap-2">
                                 <Label htmlFor="status">Status</Label>
                                 <Select value={data.status} onValueChange={(value) => setData('status', value)}>
@@ -105,6 +106,21 @@ export default function TaskCreate({ users = [] }: { users?: User[] }) {
                                     </SelectContent>
                                 </Select>
                                 <InputError message={errors.status} />
+                            </div>
+
+                            <div className="grid gap-2">
+                                <Label htmlFor="priority">Priority</Label>
+                                <Select value={data.priority} onValueChange={(value) => setData('priority', value)}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select priority" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="low">Low</SelectItem>
+                                        <SelectItem value="medium">Medium</SelectItem>
+                                        <SelectItem value="high">High</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <InputError message={errors.priority} /> // This line might need to be added to the errors object in useForm if it's not automatically handled, but typically Inertia handles server-side validation errors automatically.
                             </div>
 
                             <div className="grid gap-2">

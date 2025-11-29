@@ -12,14 +12,79 @@ import {
 } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid } from 'lucide-react';
+import {
+    Activity,
+    Archive,
+    BarChart3,
+    Bell,
+    Calendar,
+    Folder,
+    HelpCircle,
+    LayoutDashboard,
+    LayoutGrid,
+    Search,
+    Settings,
+    Tags,
+    User,
+    Users,
+} from 'lucide-react';
 import AppLogo from './app-logo';
 
 const mainNavItems: NavItem[] = [
     {
+        title: 'Dashboard',
+        href: '/dashboard',
+        icon: LayoutDashboard,
+    },
+    {
         title: 'Tasks',
         href: '/tasks',
         icon: LayoutGrid,
+    },
+    {
+        title: 'Projects',
+        href: '/projects',
+        icon: Folder,
+    },
+    {
+        title: 'Calendar',
+        href: '/calendar',
+        icon: Calendar,
+    },
+    {
+        title: 'Team',
+        href: '/team',
+        icon: Users,
+    },
+    {
+        title: 'Reports',
+        href: '/reports',
+        icon: BarChart3,
+    },
+    {
+        title: 'Profile',
+        href: '/profile',
+        icon: User,
+    },
+    {
+        title: 'Activity',
+        href: '/activity',
+        icon: Activity,
+    },
+    {
+        title: 'Archive',
+        href: '/archive',
+        icon: Archive,
+    },
+    {
+        title: 'Tags',
+        href: '/tags',
+        icon: Tags,
+    },
+    {
+        title: 'Help',
+        href: '/help',
+        icon: HelpCircle,
     },
 ];
 

@@ -1,7 +1,8 @@
 import { Task } from '@/types';
 import { DragDropContext, Draggable, Droppable, DropResult } from '@hello-pangea/dnd';
 import { router } from '@inertiajs/react';
-import { Calendar, Clock, CheckCircle2, Circle, MoreVertical, Pencil, Trash2 } from 'lucide-react';
+import { Calendar, Clock, CheckCircle2, Circle, MoreVertical, Pencil, Trash2, AlertCircle, Lock, ListChecks } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Link } from '@inertiajs/react';
@@ -19,6 +20,8 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
+import { EditTaskDialog } from '@/components/tasks/edit-task-dialog';
+import { CreateReportDialog } from '@/components/reports/create-report-dialog';
 
 interface KanbanBoardProps {
     initialTasks: Task[];
@@ -34,6 +37,8 @@ const COLUMNS = {
 export default function KanbanBoard({ initialTasks, search = '' }: KanbanBoardProps) {
     const [tasks, setTasks] = useState<Task[]>(initialTasks);
     const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+    const [editingTask, setEditingTask] = useState<Task | null>(null);
+    const [reportingTask, setReportingTask] = useState<Task | null>(null);
 
     useEffect(() => {
         setTasks(initialTasks);
@@ -149,7 +154,14 @@ export default function KanbanBoard({ initialTasks, search = '' }: KanbanBoardPr
                                                         style={provided.draggableProps.style}
                                                     >
                                                         <div className="flex items-start justify-between gap-2">
-                                                            <span className="font-medium leading-tight">{task.title}</span>
+                                                            <div className="flex items-center gap-2">
+                                                                {task.dependencies && task.dependencies.some((d: any) => d.status !== 'completed') && (
+                                                                    <span title="Blocked by dependencies">
+                                                                        <Lock className="h-3 w-3 text-destructive" />
+                                                                    </span>
+                                                                )}
+                                                                <span className="font-medium leading-tight">{task.title}</span>
+                                                            </div>
                                                             <DropdownMenu>
                                                                 <DropdownMenuTrigger asChild>
                                                                     <Button
@@ -162,11 +174,18 @@ export default function KanbanBoard({ initialTasks, search = '' }: KanbanBoardPr
                                                                     </Button>
                                                                 </DropdownMenuTrigger>
                                                                 <DropdownMenuContent align="end">
-                                                                    <Link href={route('tasks.edit', task.id)}>
-                                                                        <DropdownMenuItem>
-                                                                            <Pencil className="mr-2 h-3 w-3" /> Edit
-                                                                        </DropdownMenuItem>
-                                                                    </Link>
+                                                                    <DropdownMenuItem onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        setEditingTask(task);
+                                                                    }}>
+                                                                        <Pencil className="mr-2 h-3 w-3" /> Edit
+                                                                    </DropdownMenuItem>
+                                                                    <DropdownMenuItem onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        setReportingTask(task);
+                                                                    }}>
+                                                                        <AlertCircle className="mr-2 h-3 w-3" /> Report Issue
+                                                                    </DropdownMenuItem>
                                                                     <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => handleDelete(task.id)}>
                                                                         <Trash2 className="mr-2 h-3 w-3" /> Delete
                                                                     </DropdownMenuItem>
@@ -177,6 +196,49 @@ export default function KanbanBoard({ initialTasks, search = '' }: KanbanBoardPr
                                                         {task.description && (
                                                             <p className="text-xs text-muted-foreground line-clamp-2">{task.description}</p>
                                                         )}
+
+                                                        <div className="mt-2 space-y-1">
+                                                            <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+                                                                <div className="flex items-center gap-1">
+                                                                    {task.subtasks && task.subtasks.length > 0 ? (
+                                                                        <>
+                                                                            <ListChecks className="h-3 w-3" />
+                                                                            <span>{task.subtasks.filter((s: any) => s.is_completed).length}/{task.subtasks.length}</span>
+                                                                        </>
+                                                                    ) : (
+                                                                        <span className="capitalize">{task.status.replace('_', ' ')}</span>
+                                                                    )}
+                                                                </div>
+                                                                <span>
+                                                                    {task.subtasks && task.subtasks.length > 0
+                                                                        ? Math.round((task.subtasks.filter((s: any) => s.is_completed).length / task.subtasks.length) * 100)
+                                                                        : (task.status === 'completed' ? 100 : task.status === 'in_progress' ? 50 : 0)
+                                                                    }%
+                                                                </span>
+                                                            </div>
+                                                            <Progress
+                                                                value={
+                                                                    task.subtasks && task.subtasks.length > 0
+                                                                        ? (task.subtasks.filter((s: any) => s.is_completed).length / task.subtasks.length) * 100
+                                                                        : (task.status === 'completed' ? 100 : task.status === 'in_progress' ? 50 : 0)
+                                                                }
+                                                                className="h-1"
+                                                                indicatorClassName={
+                                                                    task.status === 'completed' ? 'bg-green-500' :
+                                                                        task.status === 'in_progress' ? 'bg-blue-500' :
+                                                                            'bg-gray-400'
+                                                                }
+                                                            />
+                                                        </div>
+
+                                                        <div className="flex items-center gap-2 mt-2">
+                                                            <Badge variant="outline" className={`text-[10px] px-1.5 py-0 h-5 ${task.priority === 'high' ? 'border-red-200 text-red-700 bg-red-50 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800' :
+                                                                task.priority === 'medium' ? 'border-yellow-200 text-yellow-700 bg-yellow-50 dark:bg-yellow-900/20 dark:text-yellow-400 dark:border-yellow-800' :
+                                                                    'border-blue-200 text-blue-700 bg-blue-50 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800'
+                                                                }`}>
+                                                                {task.priority ? task.priority.charAt(0).toUpperCase() + task.priority.slice(1) : 'Medium'}
+                                                            </Badge>
+                                                        </div>
 
                                                         <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
                                                             <div className="flex items-center gap-2">
@@ -210,15 +272,16 @@ export default function KanbanBoard({ initialTasks, search = '' }: KanbanBoardPr
                                         ))}
                                         {provided.placeholder}
                                     </div>
-                                )}
+                                )
+                                }
                             </Droppable>
                         </div>
                     );
                 })}
-            </div>
+            </div >
 
             {/* Task Details Modal */}
-            <Dialog open={!!selectedTask} onOpenChange={(open) => !open && setSelectedTask(null)}>
+            < Dialog open={!!selectedTask} onOpenChange={(open) => !open && setSelectedTask(null)}>
                 <DialogContent className="max-w-2xl">
                     {selectedTask && (
                         <>
@@ -235,6 +298,12 @@ export default function KanbanBoard({ initialTasks, search = '' }: KanbanBoardPr
                                             {selectedTask.status === 'in_progress' && <Clock className="h-3 w-3 mr-1" />}
                                             {selectedTask.status === 'completed' && <CheckCircle2 className="h-3 w-3 mr-1" />}
                                             {selectedTask.status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                        </Badge>
+                                        <Badge variant="outline" className={`${selectedTask.priority === 'high' ? 'border-red-200 text-red-700 bg-red-50 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800' :
+                                            selectedTask.priority === 'medium' ? 'border-yellow-200 text-yellow-700 bg-yellow-50 dark:bg-yellow-900/20 dark:text-yellow-400 dark:border-yellow-800' :
+                                                'border-blue-200 text-blue-700 bg-blue-50 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800'
+                                            }`}>
+                                            {selectedTask.priority ? selectedTask.priority.charAt(0).toUpperCase() + selectedTask.priority.slice(1) : 'Medium'}
                                         </Badge>
                                         {selectedTask.due_date && (
                                             <span className="text-sm text-muted-foreground flex items-center gap-1">
@@ -275,12 +344,17 @@ export default function KanbanBoard({ initialTasks, search = '' }: KanbanBoardPr
                                 )}
 
                                 <div className="flex gap-2 pt-4 border-t">
-                                    <Link href={route('tasks.edit', selectedTask.id)} className="flex-1">
-                                        <Button variant="outline" className="w-full">
-                                            <Pencil className="mr-2 h-4 w-4" />
-                                            Edit Task
-                                        </Button>
-                                    </Link>
+                                    <Button
+                                        variant="outline"
+                                        className="flex-1"
+                                        onClick={() => {
+                                            setEditingTask(selectedTask);
+                                            setSelectedTask(null);
+                                        }}
+                                    >
+                                        <Pencil className="mr-2 h-4 w-4" />
+                                        Edit Task
+                                    </Button>
                                     <Button
                                         variant="destructive"
                                         onClick={() => {
@@ -296,7 +370,20 @@ export default function KanbanBoard({ initialTasks, search = '' }: KanbanBoardPr
                         </>
                     )}
                 </DialogContent>
-            </Dialog>
-        </DragDropContext>
+            </Dialog >
+
+            <EditTaskDialog
+                task={editingTask}
+                tasks={tasks}
+                open={!!editingTask}
+                onOpenChange={(open) => !open && setEditingTask(null)}
+            />
+
+            <CreateReportDialog
+                task={reportingTask}
+                open={!!reportingTask}
+                onOpenChange={(open) => !open && setReportingTask(null)}
+            />
+        </DragDropContext >
     );
 }

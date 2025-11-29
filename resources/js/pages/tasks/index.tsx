@@ -1,11 +1,14 @@
 ﻿import AppLayout from '@/layouts/app-layout';
 import { Task, BreadcrumbItem, User } from '@/types';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, Search, Calendar, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Search, Calendar, Pencil, Trash2, LayoutGrid, List } from 'lucide-react';
 import KanbanBoard from './kanban-board';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { CreateTaskDialog } from '@/components/tasks/create-task-dialog';
+import { EditTaskDialog } from '@/components/tasks/edit-task-dialog';
+import { TaskListView } from '@/components/tasks/task-list-view';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -14,8 +17,11 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function TaskIndex({ tasks, auth }: { tasks: Task[]; auth: { user: User } }) {
+export default function TaskIndex({ tasks, auth, users }: { tasks: Task[]; auth: { user: User }; users?: User[] }) {
     const [search, setSearch] = useState('');
+    const [isCreateOpen, setIsCreateOpen] = useState(false);
+    const [editingTask, setEditingTask] = useState<Task | null>(null);
+    const [viewMode, setViewMode] = useState<'board' | 'list'>('board');
     const isAdmin = auth.user.role === 'admin';
 
     const handleDelete = (id: number) => {
@@ -33,6 +39,20 @@ export default function TaskIndex({ tasks, auth }: { tasks: Task[]; auth: { user
             (task.user && task.user.name.toLowerCase().includes(searchLower))
         );
     });
+
+    // Auto-open edit modal if editTask query parameter is present
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const editTaskId = params.get('editTask');
+        if (editTaskId) {
+            const taskToEdit = tasks.find(t => t.id === parseInt(editTaskId));
+            if (taskToEdit) {
+                setEditingTask(taskToEdit);
+                // Clean up URL
+                window.history.replaceState({}, '', window.location.pathname);
+            }
+        }
+    }, [tasks]);
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -57,11 +77,27 @@ export default function TaskIndex({ tasks, auth }: { tasks: Task[]; auth: { user
                                 className="pl-8"
                             />
                         </div>
-                        <Link href={route('tasks.create')}>
-                            <Button>
-                                <Plus className="mr-2 h-4 w-4" /> {isAdmin ? 'Assign Task' : 'New Task'}
+                        <div className="flex items-center border rounded-md bg-background">
+                            <Button
+                                variant={viewMode === 'board' ? 'secondary' : 'ghost'}
+                                size="icon"
+                                onClick={() => setViewMode('board')}
+                                className="h-9 w-9 rounded-none rounded-l-md"
+                            >
+                                <LayoutGrid className="h-4 w-4" />
                             </Button>
-                        </Link>
+                            <Button
+                                variant={viewMode === 'list' ? 'secondary' : 'ghost'}
+                                size="icon"
+                                onClick={() => setViewMode('list')}
+                                className="h-9 w-9 rounded-none rounded-r-md"
+                            >
+                                <List className="h-4 w-4" />
+                            </Button>
+                        </div>
+                        <Button onClick={() => setIsCreateOpen(true)}>
+                            <Plus className="mr-2 h-4 w-4" /> {isAdmin ? 'Assign Task' : 'New Task'}
+                        </Button>
                     </div>
                 </div>
 
@@ -74,6 +110,7 @@ export default function TaskIndex({ tasks, auth }: { tasks: Task[]; auth: { user
                                         <th className="p-4 text-left font-semibold">Task</th>
                                         <th className="p-4 text-left font-semibold">Assigned To</th>
                                         <th className="p-4 text-left font-semibold">Status</th>
+                                        <th className="p-4 text-left font-semibold">Priority</th>
                                         <th className="p-4 text-left font-semibold">Due Date</th>
                                         <th className="p-4 text-right font-semibold">Actions</th>
                                     </tr>
@@ -81,7 +118,7 @@ export default function TaskIndex({ tasks, auth }: { tasks: Task[]; auth: { user
                                 <tbody>
                                     {filteredTasks.length === 0 ? (
                                         <tr>
-                                            <td colSpan={5} className="p-8 text-center text-muted-foreground">
+                                            <td colSpan={6} className="p-8 text-center text-muted-foreground">
                                                 No tasks found. Click "Assign Task" to create tasks for your team.
                                             </td>
                                         </tr>
@@ -112,12 +149,19 @@ export default function TaskIndex({ tasks, auth }: { tasks: Task[]; auth: { user
                                                     )}
                                                 </td>
                                                 <td className="p-4">
-                                                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
-                                                        task.status === 'completed' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
+                                                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${task.status === 'completed' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
                                                         task.status === 'in_progress' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
-                                                        'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'
-                                                    }`}>
+                                                            'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'
+                                                        }`}>
                                                         {task.status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                                    </span>
+                                                </td>
+                                                <td className="p-4">
+                                                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${task.priority === 'high' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
+                                                        task.priority === 'medium' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' :
+                                                            'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                                                        }`}>
+                                                        {task.priority ? task.priority.charAt(0).toUpperCase() + task.priority.slice(1) : 'Medium'}
                                                     </span>
                                                 </td>
                                                 <td className="p-4">
@@ -132,13 +176,15 @@ export default function TaskIndex({ tasks, auth }: { tasks: Task[]; auth: { user
                                                 </td>
                                                 <td className="p-4 text-right">
                                                     <div className="flex justify-end gap-2">
-                                                        <Link href={route('tasks.edit', task.id)}>
-                                                            <Button variant="ghost" size="sm">
-                                                                <Pencil className="h-4 w-4" />
-                                                            </Button>
-                                                        </Link>
-                                                        <Button 
-                                                            variant="ghost" 
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            onClick={() => setEditingTask(task)}
+                                                        >
+                                                            <Pencil className="h-4 w-4" />
+                                                        </Button>
+                                                        <Button
+                                                            variant="ghost"
                                                             size="sm"
                                                             className="text-destructive hover:text-destructive"
                                                             onClick={() => handleDelete(task.id)}
@@ -156,9 +202,24 @@ export default function TaskIndex({ tasks, auth }: { tasks: Task[]; auth: { user
                     </div>
                 ) : (
                     <div className="flex-1 overflow-hidden">
-                        <KanbanBoard initialTasks={tasks} search={search} />
+                        {viewMode === 'board' ? (
+                            <KanbanBoard initialTasks={filteredTasks} search={search} />
+                        ) : (
+                            <TaskListView tasks={filteredTasks} />
+                        )}
                     </div>
                 )}
+
+                <CreateTaskDialog
+                    open={isCreateOpen}
+                    onOpenChange={setIsCreateOpen}
+                    users={users}
+                />
+                <EditTaskDialog
+                    task={editingTask}
+                    open={!!editingTask}
+                    onOpenChange={(open) => !open && setEditingTask(null)}
+                />
             </div>
         </AppLayout>
     );
