@@ -8,14 +8,38 @@
     {{-- Inline script to detect system dark mode preference and apply it immediately --}}
     <script>
         (function () {
-            const appearance = '{{ $appearance ?? "system" }}';
-
-            if (appearance === 'system') {
-                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-
-                if (prefersDark) {
+            // Get appearance from localStorage first (client-side preference), then fall back to cookie
+            const storedAppearance = localStorage.getItem('appearance');
+            const cookieAppearance = '{{ $appearance ?? "system" }}';
+            const appearance = storedAppearance || cookieAppearance;
+            
+            function applyTheme() {
+                const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                
+                if (appearance === 'dark') {
                     document.documentElement.classList.add('dark');
+                    document.documentElement.style.colorScheme = 'dark';
+                } else if (appearance === 'light') {
+                    document.documentElement.classList.remove('dark');
+                    document.documentElement.style.colorScheme = 'light';
+                } else if (appearance === 'system') {
+                    // For system mode, check the actual OS preference
+                    if (prefersDark) {
+                        document.documentElement.classList.add('dark');
+                        document.documentElement.style.colorScheme = 'dark';
+                    } else {
+                        document.documentElement.classList.remove('dark');
+                        document.documentElement.style.colorScheme = 'light';
+                    }
                 }
+            }
+            
+            // Apply theme immediately
+            applyTheme();
+            
+            // Listen for system theme changes if using system preference
+            if (appearance === 'system' && window.matchMedia) {
+                window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme);
             }
         })();
     </script>

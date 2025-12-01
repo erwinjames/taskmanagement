@@ -3,9 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\Task;
-use App\Models\Subtask;
+use App\Models\User;
+use App\Models\Project;
+use App\Models\TaskAttachment;
+use App\Models\TaskDependency;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
@@ -23,14 +27,14 @@ class TaskController extends Controller
         if ($user->isAdmin()) {
             // Admin sees tasks they assigned to OTHER users (not themselves)
             $tasks = Task::where('user_id', '!=', $user->id)
-                ->with(['user', 'subtasks', 'attachments', 'dependencies'])
+                ->with(['user', 'subtasks', 'parent', 'attachments', 'dependencies'])
                 ->orderBy('order')
                 ->latest()
                 ->get();
         } else {
             // Regular users see their own tasks
             $tasks = $user->tasks()
-                ->with(['user', 'subtasks', 'attachments', 'dependencies'])
+                ->with(['user', 'subtasks', 'parent', 'attachments', 'dependencies'])
                 ->orderBy('order')
                 ->latest()
                 ->get();
@@ -49,8 +53,13 @@ class TaskController extends Controller
      */
     public function create()
     {
-        $users = auth()->user()->isAdmin() ? \App\Models\User::all() : [];
-        return Inertia::render('tasks/create', ['users' => $users]);
+        $this->authorize('create', Task::class);
+        $users = User::all();
+        $projects = Project::all();
+        return Inertia::render('tasks/create', [
+            'users' => $users,
+            'projects' => $projects,
+        ]);
     }
 
     /**
@@ -83,7 +92,10 @@ class TaskController extends Controller
             foreach ($validated['subtasks'] as $subtaskTitle) {
                 $task->subtasks()->create([
                     'title' => $subtaskTitle,
-                    'is_completed' => false,
+                    'user_id' => $task->user_id,
+                    'status' => 'pending',
+                    'priority' => $task->priority,
+                    'created_by' => Auth::id(),
                 ]);
             }
         }
@@ -106,7 +118,14 @@ class TaskController extends Controller
     public function edit(Task $task)
     {
         $this->authorize('update', $task);
-        return Inertia::render('tasks/edit', ['task' => $task]);
+        $task->load(['parent', 'subtasks']);
+        $users = User::all();
+        $projects = Project::all();
+        return Inertia::render('tasks/edit', [
+            'task' => $task,
+            'users' => $users,
+            'projects' => $projects,
+        ]);
     }
 
     /**
@@ -175,20 +194,31 @@ class TaskController extends Controller
 
         $task->subtasks()->create([
             'title' => $validated['title'],
-            'is_completed' => false,
+            'user_id' => $task->user_id,
+            'status' => 'pending',
+            'priority' => $task->priority,
+            'created_by' => Auth::id(),
         ]);
 
         return back();
     }
 
-    public function updateSubtask(Request $request, Subtask $subtask)
+    public function updateSubtask(Request $request, Task $subtask)
     {
         $validated = $request->validate([
             'is_completed' => 'boolean',
             'title' => 'string|max:255',
         ]);
 
-        $subtask->update($validated);
+        if (isset($validated['is_completed'])) {
+            $subtask->status = $validated['is_completed'] ? 'completed' : 'pending';
+        }
+
+        if (isset($validated['title'])) {
+            $subtask->title = $validated['title'];
+        }
+
+        $subtask->save();
 
         // Auto-update task status based on progress
         $this->updateStatusFromProgress($subtask->task);
@@ -196,9 +226,9 @@ class TaskController extends Controller
         return back();
     }
 
-    public function deleteSubtask(Subtask $subtask)
+    public function deleteSubtask(Task $subtask)
     {
-        $task = $subtask->task;
+        $task = $subtask->parent;
         $subtask->delete();
 
         // Auto-update task status based on progress
@@ -215,7 +245,7 @@ class TaskController extends Controller
         if ($total === 0)
             return;
 
-        $completed = $task->subtasks->where('is_completed', true)->count();
+        $completed = $task->subtasks->where('status', 'completed')->count();
 
         if ($completed === 0) {
             $task->update(['status' => 'pending']);

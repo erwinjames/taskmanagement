@@ -23,6 +23,11 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'admin_id',
+        'department',
+        'status',
+        'last_active_at',
+        'skills',
     ];
 
     /**
@@ -56,6 +61,8 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'skills' => 'array',
+            'last_active_at' => 'datetime',
         ];
     }
 
@@ -67,5 +74,42 @@ class User extends Authenticatable
     public function tasks()
     {
         return $this->hasMany(Task::class);
+    }
+
+    public function projects()
+    {
+        return $this->belongsToMany(Project::class, 'project_user')
+            ->withPivot('role', 'is_starred')
+            ->withTimestamps();
+    }
+
+    public function getTaskStatisticsAttribute()
+    {
+        return [
+            'total' => $this->tasks()->count(),
+            'completed' => $this->tasks()->where('status', 'completed')->count(),
+            'in_progress' => $this->tasks()->where('status', 'in_progress')->count(),
+            'pending' => $this->tasks()->where('status', 'pending')->count(),
+        ];
+    }
+
+    public function scopeActive($query)
+    {
+        return $query->where('status', 'active');
+    }
+
+    public function scopeByDepartment($query, $department)
+    {
+        return $query->where('department', $department);
+    }
+
+    public function admin()
+    {
+        return $this->belongsTo(User::class, 'admin_id');
+    }
+
+    public function teamMembers()
+    {
+        return $this->hasMany(User::class, 'admin_id');
     }
 }

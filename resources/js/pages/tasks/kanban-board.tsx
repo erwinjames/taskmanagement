@@ -1,7 +1,7 @@
 import { Task } from '@/types';
 import { DragDropContext, Draggable, Droppable, DropResult } from '@hello-pangea/dnd';
 import { router } from '@inertiajs/react';
-import { Calendar, Clock, CheckCircle2, Circle, MoreVertical, Pencil, Trash2, AlertCircle, Lock, ListChecks } from 'lucide-react';
+import { Calendar, Clock, CheckCircle2, Circle, MoreVertical, Pencil, Trash2, AlertCircle, Lock, ListChecks, Archive } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
@@ -113,7 +113,7 @@ export default function KanbanBoard({ initialTasks, search = '' }: KanbanBoardPr
     };
 
     const handleDelete = (id: number) => {
-        if (confirm('Are you sure you want to delete this task?')) {
+        if (confirm('Are you sure you want to archive this task?')) {
             router.delete(route('tasks.destroy', id));
         }
     };
@@ -186,8 +186,11 @@ export default function KanbanBoard({ initialTasks, search = '' }: KanbanBoardPr
                                                                     }}>
                                                                         <AlertCircle className="mr-2 h-3 w-3" /> Report Issue
                                                                     </DropdownMenuItem>
-                                                                    <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => handleDelete(task.id)}>
-                                                                        <Trash2 className="mr-2 h-3 w-3" /> Delete
+                                                                    <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        handleDelete(task.id);
+                                                                    }}>
+                                                                        <Archive className="mr-2 h-3 w-3" /> Archive
                                                                     </DropdownMenuItem>
                                                                 </DropdownMenuContent>
                                                             </DropdownMenu>
@@ -362,8 +365,8 @@ export default function KanbanBoard({ initialTasks, search = '' }: KanbanBoardPr
                                             handleDelete(selectedTask.id);
                                         }}
                                     >
-                                        <Trash2 className="mr-2 h-4 w-4" />
-                                        Delete
+                                        <Archive className="mr-2 h-4 w-4" />
+                                        Archive
                                     </Button>
                                 </div>
                             </div>

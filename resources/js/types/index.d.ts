@@ -46,7 +46,29 @@ export interface User {
     two_factor_enabled?: boolean;
     created_at: string;
     updated_at: string;
+    role?: string;
     [key: string]: unknown; // This allows for additional properties...
+}
+
+export interface Project {
+    id: number;
+    name: string;
+    description: string | null;
+    status: 'active' | 'on_hold' | 'completed';
+    priority: 'low' | 'medium' | 'high';
+    start_date: string | null;
+    end_date: string | null;
+    deadline: string | null;
+    budget: number | null;
+    created_by: number;
+    thumbnail_path: string | null;
+    color: string;
+    is_archived: boolean;
+    created_at: string;
+    updated_at: string;
+    members?: User[];
+    tasks_count: number;
+    completed_tasks_count: number;
 }
 
 export interface Task {
@@ -59,7 +81,8 @@ export interface Task {
     due_date: string | null;
     order?: number;
     user?: User;
-    subtasks?: { id: number; title: string; is_completed: boolean }[];
+    parent?: Task;
+    subtasks?: Task[];
     attachments?: { id: number; file_name: string; file_size: number; file_path: string }[];
     dependencies?: Task[];
     created_at: string;

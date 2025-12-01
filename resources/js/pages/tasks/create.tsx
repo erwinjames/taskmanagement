@@ -1,5 +1,5 @@
 import AppLayout from '@/layouts/app-layout';
-import { BreadcrumbItem, User } from '@/types';
+import { BreadcrumbItem, User, Project } from '@/types';
 import { Head, useForm, Link } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,7 +20,12 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function TaskCreate({ users = [] }: { users?: User[] }) {
+interface Props {
+    users?: User[];
+    projects?: Project[];
+}
+
+export default function TaskCreate({ users = [], projects = [] }: Props) {
     const { data, setData, post, processing, errors } = useForm({
         title: '',
         description: '',
@@ -28,6 +33,8 @@ export default function TaskCreate({ users = [] }: { users?: User[] }) {
         priority: 'medium',
         due_date: '',
         assigned_to: '',
+        project_id: '',
+        subtasks: [] as string[],
     });
 
     const submit: FormEventHandler = (e) => {
@@ -77,6 +84,26 @@ export default function TaskCreate({ users = [] }: { users?: User[] }) {
                                     </SelectContent>
                                 </Select>
                                 <InputError message={errors.assigned_to} />
+                            </div>
+                        )}
+
+                        {projects.length > 0 && (
+                            <div className="grid gap-2">
+                                <Label htmlFor="project_id">Project (Optional)</Label>
+                                <Select value={data.project_id} onValueChange={(value) => setData('project_id', value)}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select project" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="">No Project</SelectItem>
+                                        {projects.map((project) => (
+                                            <SelectItem key={project.id} value={String(project.id)}>
+                                                {project.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <InputError message={errors.project_id} />
                             </div>
                         )}
 
@@ -133,6 +160,56 @@ export default function TaskCreate({ users = [] }: { users?: User[] }) {
                                 />
                                 <InputError message={errors.due_date} />
                             </div>
+                        </div>
+
+                        <div className="grid gap-2">
+                            <Label>Subtasks</Label>
+                            {data.subtasks.map((subtask, index) => (
+                                <div key={index} className="flex gap-2">
+                                    <Input
+                                        value={subtask}
+                                        onChange={(e) => {
+                                            const newSubtasks = [...data.subtasks];
+                                            newSubtasks[index] = e.target.value;
+                                            setData('subtasks', newSubtasks);
+                                        }}
+                                        placeholder={`Subtask ${index + 1}`}
+                                    />
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="icon"
+                                        onClick={() => {
+                                            const newSubtasks = data.subtasks.filter((_, i) => i !== index);
+                                            setData('subtasks', newSubtasks);
+                                        }}
+                                    >
+                                        <span className="sr-only">Remove</span>
+                                        <svg
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            strokeWidth="2"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            className="h-4 w-4"
+                                        >
+                                            <path d="M18 6 6 18" />
+                                            <path d="m6 6 12 12" />
+                                        </svg>
+                                    </Button>
+                                </div>
+                            ))}
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setData('subtasks', [...data.subtasks, ''])}
+                                className="w-full"
+                            >
+                                Add Subtask
+                            </Button>
+                            <InputError message={errors.subtasks} />
                         </div>
 
                         <div className="flex justify-end gap-4">

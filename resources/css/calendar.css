@@ -1,0 +1,203 @@
+/* Custom styles for react-big-calendar dark mode support */
+
+/* Light mode (default) */
+.rbc-calendar {
+    background-color: hsl(var(--card));
+    color: hsl(var(--card-foreground));
+}
+
+.rbc-header {
+    background-color: hsl(var(--muted) / 0.5);
+    color: hsl(var(--muted-foreground));
+    border-bottom: 1px solid hsl(var(--border));
+    padding: 0.75rem;
+    font-weight: 600;
+}
+
+.rbc-today {
+    background-color: hsl(var(--primary) / 0.1);
+}
+
+.rbc-off-range-bg {
+    background-color: hsl(var(--muted) / 0.3);
+}
+
+.rbc-date-cell {
+    padding: 0.25rem;
+}
+
+.rbc-day-bg + .rbc-day-bg {
+    border-left: 1px solid hsl(var(--border));
+}
+
+.rbc-month-row + .rbc-month-row {
+    border-top: 1px solid hsl(var(--border));
+}
+
+.rbc-month-view {
+    border: 1px solid hsl(var(--border));
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+
+.rbc-time-view {
+    border: 1px solid hsl(var(--border));
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+
+.rbc-agenda-view {
+    border: 1px solid hsl(var(--border));
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+
+.rbc-agenda-view table {
+    border: none;
+}
+
+.rbc-agenda-date-cell,
+.rbc-agenda-time-cell {
+    background-color: hsl(var(--muted) / 0.3);
+    color: hsl(var(--muted-foreground));
+    border-top: 1px solid hsl(var(--border));
+    padding: 0.5rem;
+}
+
+.rbc-agenda-event-cell {
+    border-top: 1px solid hsl(var(--border));
+    padding: 0.5rem;
+}
+
+.rbc-time-header {
+    background-color: hsl(var(--card));
+    border-bottom: 1px solid hsl(var(--border));
+}
+
+.rbc-time-content {
+    border-top: 1px solid hsl(var(--border));
+}
+
+.rbc-time-slot {
+    border-top: 1px solid hsl(var(--border) / 0.5);
+}
+
+.rbc-current-time-indicator {
+    background-color: hsl(var(--primary));
+}
+
+.rbc-day-slot .rbc-time-slot {
+    border-top: 1px solid hsl(var(--border) / 0.3);
+}
+
+.rbc-toolbar {
+    padding: 1rem 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.rbc-toolbar button {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    border: 1px solid hsl(var(--border));
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.rbc-toolbar button:hover {
+    background-color: hsl(var(--muted));
+}
+
+.rbc-toolbar button.rbc-active {
+    background-color: hsl(var(--secondary));
+    color: hsl(var(--secondary-foreground));
+}
+
+.rbc-toolbar-label {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: hsl(var(--foreground));
+}
+
+.rbc-event {
+    padding: 2px 5px;
+    border-radius: 4px;
+    font-size: 0.875rem;
+}
+
+.rbc-event.rbc-selected {
+    opacity: 1;
+}
+
+.rbc-show-more {
+    background-color: transparent;
+    color: hsl(var(--primary));
+    font-size: 0.75rem;
+    padding: 0.25rem;
+    cursor: pointer;
+}
+
+.rbc-show-more:hover {
+    text-decoration: underline;
+}
+
+.rbc-overlay {
+    background-color: hsl(var(--popover));
+    border: 1px solid hsl(var(--border));
+    border-radius: 0.5rem;
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+    padding: 0.5rem;
+}
+
+.rbc-overlay-header {
+    background-color: hsl(var(--muted) / 0.5);
+    border-bottom: 1px solid hsl(var(--border));
+    padding: 0.5rem;
+    font-weight: 600;
+}
+
+/* Week and Day view time gutter */
+.rbc-time-gutter {
+    background-color: hsl(var(--card));
+    color: hsl(var(--muted-foreground));
+}
+
+.rbc-timeslot-group {
+    border-left: 1px solid hsl(var(--border));
+}
+
+.rbc-day-slot .rbc-events-container {
+    margin-right: 0;
+}
+
+/* All day row */
+.rbc-allday-cell {
+    background-color: hsl(var(--muted) / 0.2);
+}
+
+/* Selected date cell */
+.rbc-selected-cell {
+    background-color: hsl(var(--primary) / 0.1);
+}
+
+/* Date cell text */
+.rbc-button-link {
+    color: hsl(var(--foreground));
+}
+
+.rbc-off-range .rbc-button-link {
+    color: hsl(var(--muted-foreground));
+}
+
+/* Ensure proper contrast in dark mode */
+@media (prefers-color-scheme: dark) {
+    .rbc-calendar {
+        color-scheme: dark;
+    }
+}

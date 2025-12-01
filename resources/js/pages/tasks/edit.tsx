@@ -46,6 +46,17 @@ export default function TaskEdit({ task }: { task: Task }) {
                 </div>
 
                 <div className="max-w-2xl rounded-xl border bg-card text-card-foreground shadow-sm p-6">
+                    {task.parent && (
+                        <div className="mb-6 p-4 bg-muted/50 rounded-lg border">
+                            <Label className="text-muted-foreground">Parent Task</Label>
+                            <div className="mt-1">
+                                <Link href={route('tasks.edit', task.parent.id)} className="text-primary hover:underline font-medium">
+                                    {task.parent.title}
+                                </Link>
+                            </div>
+                        </div>
+                    )}
+
                     <form onSubmit={submit} className="space-y-6">
                         <div className="grid gap-2">
                             <Label htmlFor="title">Title</Label>
@@ -75,7 +86,7 @@ export default function TaskEdit({ task }: { task: Task }) {
                         <div className="grid gap-6 md:grid-cols-3">
                             <div className="grid gap-2">
                                 <Label htmlFor="status">Status</Label>
-                                <Select value={data.status} onValueChange={(value) => setData('status', value)}>
+                                <Select value={data.status} onValueChange={(value) => setData('status', value as 'pending' | 'in_progress' | 'completed')}>
                                     <SelectTrigger>
                                         <SelectValue placeholder="Select status" />
                                     </SelectTrigger>
@@ -90,7 +101,7 @@ export default function TaskEdit({ task }: { task: Task }) {
 
                             <div className="grid gap-2">
                                 <Label htmlFor="priority">Priority</Label>
-                                <Select value={data.priority} onValueChange={(value) => setData('priority', value)}>
+                                <Select value={data.priority} onValueChange={(value) => setData('priority', value as 'low' | 'medium' | 'high')}>
                                     <SelectTrigger>
                                         <SelectValue placeholder="Select priority" />
                                     </SelectTrigger>
@@ -114,6 +125,31 @@ export default function TaskEdit({ task }: { task: Task }) {
                                 <InputError message={errors.due_date} />
                             </div>
                         </div>
+
+                        {task.subtasks && task.subtasks.length > 0 && (
+                            <div className="grid gap-2">
+                                <Label>Subtasks</Label>
+                                <div className="rounded-md border">
+                                    {task.subtasks.map((subtask) => (
+                                        <div key={subtask.id} className="flex items-center justify-between p-3 border-b last:border-0">
+                                            <div className="flex items-center gap-2">
+                                                <div className={`w-2 h-2 rounded-full ${subtask.status === 'completed' ? 'bg-green-500' :
+                                                    subtask.status === 'in_progress' ? 'bg-blue-500' : 'bg-gray-300'
+                                                    }`} />
+                                                <span className={subtask.status === 'completed' ? 'line-through text-muted-foreground' : ''}>
+                                                    {subtask.title}
+                                                </span>
+                                            </div>
+                                            <Link href={route('tasks.edit', subtask.id)}>
+                                                <Button variant="ghost" size="sm">
+                                                    Edit
+                                                </Button>
+                                            </Link>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
 
                         <div className="flex justify-end gap-4">
                             <Link href={route('tasks.index')}>

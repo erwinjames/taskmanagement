@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Task extends Model
 {
-    use HasFactory;
+    use HasFactory, LogsActivity, SoftDeletes;
 
     protected $fillable = [
         'user_id',
@@ -18,6 +20,9 @@ class Task extends Model
         'order',
         'created_by',
         'priority',
+        'parent_id',
+        'project_id',
+        'archive_notes',
     ];
 
     public function user()
@@ -25,9 +30,19 @@ class Task extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function project()
+    {
+        return $this->belongsTo(Project::class);
+    }
+
+    public function parent()
+    {
+        return $this->belongsTo(Task::class, 'parent_id');
+    }
+
     public function subtasks()
     {
-        return $this->hasMany(Subtask::class);
+        return $this->hasMany(Task::class, 'parent_id');
     }
 
     public function attachments()

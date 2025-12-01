@@ -3,7 +3,7 @@ import { Task, BreadcrumbItem, User } from '@/types';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, Search, Calendar, Pencil, Trash2, LayoutGrid, List } from 'lucide-react';
+import { Plus, Search, Calendar, Pencil, Trash2, LayoutGrid, List, Archive } from 'lucide-react';
 import KanbanBoard from './kanban-board';
 import { useState, useEffect } from 'react';
 import { CreateTaskDialog } from '@/components/tasks/create-task-dialog';
@@ -24,11 +24,7 @@ export default function TaskIndex({ tasks, auth, users }: { tasks: Task[]; auth:
     const [viewMode, setViewMode] = useState<'board' | 'list'>('board');
     const isAdmin = auth.user.role === 'admin';
 
-    const handleDelete = (id: number) => {
-        if (confirm('Are you sure you want to delete this task?')) {
-            router.delete(route('tasks.destroy', id));
-        }
-    };
+
 
     const filteredTasks = tasks.filter(task => {
         if (!search) return true;
@@ -95,6 +91,9 @@ export default function TaskIndex({ tasks, auth, users }: { tasks: Task[]; auth:
                                 <List className="h-4 w-4" />
                             </Button>
                         </div>
+                        <Button variant="outline" onClick={() => router.visit(route('archive.index', { tab: 'tasks' }))}>
+                            <Archive className="mr-2 h-4 w-4" /> View Archive
+                        </Button>
                         <Button onClick={() => setIsCreateOpen(true)}>
                             <Plus className="mr-2 h-4 w-4" /> {isAdmin ? 'Assign Task' : 'New Task'}
                         </Button>
@@ -187,9 +186,14 @@ export default function TaskIndex({ tasks, auth, users }: { tasks: Task[]; auth:
                                                             variant="ghost"
                                                             size="sm"
                                                             className="text-destructive hover:text-destructive"
-                                                            onClick={() => handleDelete(task.id)}
+                                                            onClick={() => {
+                                                                if (confirm('Are you sure you want to archive this task?')) {
+                                                                    router.delete(route('tasks.destroy', task.id));
+                                                                }
+                                                            }}
+                                                            title="Archive Task"
                                                         >
-                                                            <Trash2 className="h-4 w-4" />
+                                                            <Archive className="h-4 w-4" />
                                                         </Button>
                                                     </div>
                                                 </td>

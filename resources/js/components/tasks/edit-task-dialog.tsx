@@ -3,7 +3,7 @@ import { router } from '@inertiajs/react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
 import { Paperclip, X, Plus, Trash2, FileIcon, CheckCircle2, Circle, Link as LinkIcon, Lock } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
     Dialog,
     DialogContent,
@@ -36,6 +36,18 @@ export function EditTaskDialog({ task, tasks = [], open, onOpenChange }: EditTas
         priority: (task?.priority || 'medium') as 'low' | 'medium' | 'high',
         due_date: task?.due_date || '',
     });
+
+    useEffect(() => {
+        if (task) {
+            setData({
+                title: task.title,
+                description: task.description || '',
+                status: task.status as 'pending' | 'in_progress' | 'completed',
+                priority: (task.priority || 'medium') as 'low' | 'medium' | 'high',
+                due_date: task.due_date || '',
+            });
+        }
+    }, [task]);
 
     const [newSubtaskTitle, setNewSubtaskTitle] = useState('');
     const [isUploading, setIsUploading] = useState(false);
@@ -205,56 +217,52 @@ export function EditTaskDialog({ task, tasks = [], open, onOpenChange }: EditTas
                         </div>
                     </div>
 
+                    {/* Parent Task Section */}
+                    {task.parent && (
+                        <div className="mb-6 p-4 bg-muted/50 rounded-lg border">
+                            <Label className="text-muted-foreground">Parent Task</Label>
+                            <div className="mt-1 flex items-center gap-2">
+                                <LinkIcon className="h-4 w-4 text-muted-foreground" />
+                                <span className="font-medium">{task.parent.title}</span>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Subtasks Section */}
-                    <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                            <Label>Subtasks ({completedSubtasks}/{subtasks.length})</Label>
-                            <span className="text-xs text-muted-foreground">{Math.round(progress)}%</span>
-                        </div>
-                        <Progress value={progress} className="h-2" />
+                    {subtasks.length > 0 && (
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                                <Label>Subtasks ({completedSubtasks}/{subtasks.length})</Label>
+                                <span className="text-xs text-muted-foreground">{Math.round(progress)}%</span>
+                            </div>
+                            <Progress value={progress} className="h-2" />
 
-                        <div className="space-y-2">
-                            {subtasks.map((subtask: any) => (
-                                <div key={subtask.id} className="flex items-center justify-between group p-2 rounded-md hover:bg-muted/50 border border-transparent hover:border-border transition-colors">
-                                    <div className="flex items-center gap-3 flex-1">
-                                        <Checkbox
-                                            checked={subtask.is_completed}
-                                            onCheckedChange={() => handleToggleSubtask(subtask)}
-                                        />
-                                        <span className={`text-sm ${subtask.is_completed ? 'line-through text-muted-foreground' : ''}`}>
-                                            {subtask.title}
-                                        </span>
+                            <div className="space-y-2">
+                                {subtasks.map((subtask: any) => (
+                                    <div key={subtask.id} className="flex items-center justify-between group p-2 rounded-md hover:bg-muted/50 border border-transparent hover:border-border transition-colors">
+                                        <div className="flex items-center gap-3 flex-1">
+                                            <Checkbox
+                                                checked={subtask.is_completed}
+                                                onCheckedChange={() => handleToggleSubtask(subtask)}
+                                            />
+                                            <span className={`text-sm ${subtask.is_completed ? 'line-through text-muted-foreground' : ''}`}>
+                                                {subtask.title}
+                                            </span>
+                                        </div>
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-6 w-6 opacity-0 group-hover:opacity-100 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                            onClick={() => handleDeleteSubtask(subtask)}
+                                        >
+                                            <X className="h-3 w-3" />
+                                        </Button>
                                     </div>
-                                    <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-6 w-6 opacity-0 group-hover:opacity-100 text-destructive hover:text-destructive hover:bg-destructive/10"
-                                        onClick={() => handleDeleteSubtask(subtask)}
-                                    >
-                                        <X className="h-3 w-3" />
-                                    </Button>
-                                </div>
-                            ))}
+                                ))}
+                            </div>
                         </div>
-
-                        <div className="flex gap-2">
-                            <Input
-                                value={newSubtaskTitle}
-                                onChange={(e) => setNewSubtaskTitle(e.target.value)}
-                                placeholder="Add a subtask..."
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter') {
-                                        e.preventDefault();
-                                        handleAddSubtask(e);
-                                    }
-                                }}
-                            />
-                            <Button type="button" size="icon" onClick={handleAddSubtask} disabled={!newSubtaskTitle.trim()}>
-                                <Plus className="h-4 w-4" />
-                            </Button>
-                        </div>
-                    </div>
+                    )}
 
                     {/* Attachments Section */}
                     <div className="space-y-4">

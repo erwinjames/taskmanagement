@@ -18,9 +18,13 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): Response
     {
+        // Get all admin users for the dropdown
+        $admins = \App\Models\User::where('role', 'admin')->get(['id', 'name', 'email']);
+
         return Inertia::render('settings/profile', [
             'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
             'status' => $request->session()->get('status'),
+            'admins' => $admins,
         ]);
     }
 
@@ -29,13 +33,45 @@ class ProfileController extends Controller
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        $user = $request->user();
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+        // Handle admin_id change request
+        if ($request->has('admin_id')) {
+            $newAdminId = $request->admin_id;
+
+            // If changing admin, create an assignment request
+            if ($newAdminId != $user->admin_id) {
+                // Cancel any existing pending requests
+                \App\Models\AdminAssignmentRequest::where('user_id', $user->id)
+                    ->where('status', 'pending')
+                    ->update(['status' => 'rejected']);
+
+                // Create new assignment request
+                if ($newAdminId) {
+                    $assignmentRequest = \App\Models\AdminAssignmentRequest::create([
+                        'user_id' => $user->id,
+                        'requested_admin_id' => $newAdminId,
+                        'status' => 'pending',
+                    ]);
+
+                    $admin = \App\Models\User::find($newAdminId);
+                    if ($admin) {
+                        $assignmentRequest->load('user');
+                        $admin->notify(new \App\Notifications\AdminAssignmentNotification($assignmentRequest));
+                    }
+
+                    return redirect()->route('profile.edit')->with('status', 'admin-request-sent');
+                }
+            }
         }
 
-        $request->user()->save();
+        $user->fill($request->validated());
+
+        if ($user->isDirty('email')) {
+            $user->email_verified_at = null;
+        }
+
+        $user->save();
 
         return to_route('profile.edit');
     }

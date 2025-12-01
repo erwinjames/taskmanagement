@@ -21,15 +21,16 @@ interface CreateTaskDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     users?: User[];
+    initialDate?: Date | null;
 }
 
-export function CreateTaskDialog({ open, onOpenChange, users = [] }: CreateTaskDialogProps) {
+export function CreateTaskDialog({ open, onOpenChange, users = [], initialDate }: CreateTaskDialogProps) {
     const { data, setData, post, processing, errors, reset } = useForm({
         title: '',
         description: '',
         status: 'pending' as 'pending' | 'in_progress' | 'completed',
         priority: 'medium' as 'low' | 'medium' | 'high',
-        due_date: '',
+        due_date: initialDate ? initialDate.toISOString().split('T')[0] : '',
         assigned_to: '',
         subtasks: [] as string[],
     });
@@ -57,6 +58,15 @@ export function CreateTaskDialog({ open, onOpenChange, users = [] }: CreateTaskD
             },
         });
     };
+
+    // Update due_date when initialDate changes or dialog opens
+    const [prevOpen, setPrevOpen] = useState(false);
+    if (open !== prevOpen) {
+        setPrevOpen(open);
+        if (open && initialDate) {
+            setData('due_date', initialDate.toISOString().split('T')[0]);
+        }
+    }
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>

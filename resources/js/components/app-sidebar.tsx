@@ -62,11 +62,6 @@ const mainNavItems: NavItem[] = [
         icon: BarChart3,
     },
     {
-        title: 'Profile',
-        href: '/profile',
-        icon: User,
-    },
-    {
         title: 'Activity',
         href: '/activity',
         icon: Activity,
@@ -75,11 +70,6 @@ const mainNavItems: NavItem[] = [
         title: 'Archive',
         href: '/archive',
         icon: Archive,
-    },
-    {
-        title: 'Tags',
-        href: '/tags',
-        icon: Tags,
     },
     {
         title: 'Help',
